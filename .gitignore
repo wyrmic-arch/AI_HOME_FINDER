@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Next.js build output
+.next/
+out/
+build/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Environment variables (never commit)
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Internal docs (not part of the app)
+QA_REPORT.md
+QA_FIXES.md
