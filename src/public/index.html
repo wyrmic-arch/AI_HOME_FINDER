@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Business Pulse Admin Dashboard</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    [v-cloak] { display: none !important; }
+  </style>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 min-h-screen flex flex-col">
+
+  <!-- Header / Navigation -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="bg-blue-600 text-white p-2 rounded-lg shadow-md flex items-center justify-center">
+          <i class="fa-solid fa-heart-pulse text-lg animate-pulse"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight text-slate-900">Business Pulse</h1>
+          <p class="text-xs text-slate-500 font-medium">Multi-Tenant Monitoring MVP</p>
+        </div>
+      </div>
+      <div id="logout-btn-container" class="hidden">
+        <button onclick="logout()" class="inline-flex items-center space-x-2 text-sm text-slate-600 hover:text-red-600 transition bg-slate-100 hover:bg-red-50 px-3 py-1.5 rounded-lg border border-slate-200">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i>
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- LOGIN PANEL -->
+    <div id="login-panel" class="hidden max-w-md mx-auto my-12 bg-white p-8 rounded-2xl shadow-xl border border-slate-200/60">
+      <div class="text-center mb-6">
+        <div class="bg-blue-50 text-blue-600 w-16 h-16 mx-auto rounded-full flex items-center justify-center text-2xl mb-4">
+          <i class="fa-solid fa-lock"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-950">Admin Authentication</h2>
+        <p class="text-sm text-slate-500 mt-1">Please enter the shared administrator password.</p>
+      </div>
+
+      <form onsubmit="login(event)" class="space-y-4">
+        <div>
+          <label for="admin-password" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Password</label>
+          <input type="password" id="admin-password" required placeholder="••••••••••••"
+            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition placeholder:text-slate-300">
+        </div>
+        <div id="login-error" class="text-sm text-red-600 font-medium hidden flex items-center space-x-1">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span>Incorrect password. Please try again.</span>
+        </div>
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-xl transition shadow-md hover:shadow-lg flex items-center justify-center space-x-2">
+          <span>Sign In</span>
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+      </form>
+    </div>
+
+    <!-- MAIN DASHBOARD CONTENT -->
+    <div id="dashboard-content" class="hidden space-y-8">
+
+      <!-- Stats Summary row -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Total Clients</p>
+            <h3 id="stat-total-clients" class="text-3xl font-bold text-slate-900">0</h3>
+          </div>
+          <div class="text-blue-500 bg-blue-50 p-3.5 rounded-xl"><i class="fa-solid fa-users text-xl"></i></div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Active</p>
+            <h3 id="stat-active-clients" class="text-3xl font-bold text-green-600">0</h3>
+          </div>
+          <div class="text-green-500 bg-green-50 p-3.5 rounded-xl"><i class="fa-solid fa-circle-check text-xl"></i></div>
+        </div>
+        <div id="stat-down-card" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between transition-colors">
+          <div>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Status Down</p>
+            <h3 id="stat-down-clients" class="text-3xl font-bold text-slate-900">0</h3>
+          </div>
+          <div id="stat-down-icon" class="text-slate-500 bg-slate-50 p-3.5 rounded-xl"><i class="fa-solid fa-triangle-exclamation text-xl"></i></div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Monthly MRR</p>
+            <h3 id="stat-mrr" class="text-3xl font-bold text-slate-900">R0</h3>
+          </div>
+          <div class="text-purple-500 bg-purple-50 p-3.5 rounded-xl"><i class="fa-solid fa-hand-holding-dollar text-xl"></i></div>
+        </div>
+      </div>
+
+      <!-- Action & Filter Header -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Monitored Clients</h2>
+          <p class="text-sm text-slate-500">Configure uptime checks, google reviews, and digests.</p>
+        </div>
+        <button onclick="openClientModal()" class="inline-flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2.5 rounded-xl shadow transition">
+          <i class="fa-solid fa-plus text-sm"></i>
+          <span>Add Client</span>
+        </button>
+      </div>
+
+      <!-- Client List Cards/Table -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-200/80 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                <th class="py-4 px-6">Business & URL</th>
+                <th class="py-4 px-6 text-center">Status</th>
+                <th class="py-4 px-6">Owner Contact</th>
+                <th class="py-4 px-6">Google Reviews</th>
+                <th class="py-4 px-6">Last Checked</th>
+                <th class="py-4 px-6 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="clients-table-body" class="divide-y divide-slate-100">
+              <!-- Dynamically populated -->
+              <tr>
+                <td colspan="6" class="py-12 text-center text-slate-400 font-medium">
+                  <i class="fa-solid fa-circle-notch animate-spin text-xl mr-2"></i> Loading clients...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Client Add/Edit Modal -->
+  <div id="client-modal" class="hidden fixed inset-0 z-50 overflow-y-auto flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200/60 max-w-xl w-full overflow-hidden transform transition-all">
+      <div class="bg-slate-50 border-b border-slate-100 px-6 py-4 flex items-center justify-between">
+        <h3 id="modal-title" class="text-lg font-bold text-slate-900">Add Monitored Client</h3>
+        <button onclick="closeClientModal()" class="text-slate-400 hover:text-slate-600 transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+      <form onsubmit="saveClient(event)" class="p-6 space-y-4">
+        <input type="hidden" id="modal-client-id">
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="col-span-2 sm:col-span-1">
+            <label for="client-name" class="block text-xs font-bold text-slate-600 uppercase mb-1">Business Name *</label>
+            <input type="text" id="client-name" required placeholder="e.g. Acme Coffee"
+              class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:outline-none transition">
+          </div>
+          <div class="col-span-2 sm:col-span-1">
+            <label for="client-owner-email" class="block text-xs font-bold text-slate-600 uppercase mb-1">Owner Email *</label>
+            <input type="email" id="client-owner-email" required placeholder="e.g. owner@acmecoffee.com"
+              class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:outline-none transition">
+          </div>
+        </div>
+
+        <div>
+          <label for="client-url" class="block text-xs font-bold text-slate-600 uppercase mb-1">Website URL *</label>
+          <input type="url" id="client-url" required placeholder="https://www.acmecoffee.com"
+            class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:outline-none transition">
+          </div>
+
+        <div>
+          <label for="client-place-id" class="block text-xs font-bold text-slate-600 uppercase mb-1 flex items-center justify-between">
+            <span>Google Place ID</span>
+            <span class="text-[10px] font-normal text-slate-400 uppercase tracking-normal">Optional</span>
+          </label>
+          <input type="text" id="client-place-id" placeholder="e.g. ChIJN1t_tDeuEmsRUsoyG83A16A"
+            class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:outline-none transition">
+        </div>
+
+        <div class="bg-slate-50 border border-slate-100 p-4 rounded-xl flex items-center justify-between">
+          <div>
+            <h4 class="text-sm font-semibold text-slate-900">Active Monitoring Toggle</h4>
+            <p class="text-xs text-slate-500 mt-0.5">Pause monitoring to halt pings, alerts, and snapshots.</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="client-active" value="" class="sr-only peer" checked>
+            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+          </label>
+        </div>
+
+        <div class="pt-4 border-t border-slate-100 flex items-center justify-end space-x-3">
+          <button type="button" onclick="closeClientModal()" class="px-4 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition text-sm font-medium text-slate-600">
+            Cancel
+          </button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow transition text-sm font-medium">
+            Save Client
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="bg-white border-t border-slate-200 py-6 mt-12 text-center text-xs text-slate-400 font-medium">
+    <p>© <span id="current-year"></span> Business Pulse Service. Robust MVP monitoring engine.</p>
+  </footer>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="hidden fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-lg border border-slate-800 flex items-center space-x-2 transition-transform duration-300 translate-y-20">
+    <div id="toast-icon"></div>
+    <p id="toast-message" class="text-sm font-medium"></p>
+  </div>
+
+  <!-- Main Controller Logic JS -->
+  <script>
+    document.getElementById('current-year').textContent = new Date().getFullYear();
+
+    // Check login state on initial load
+    async function checkAuth() {
+      try {
+        const res = await fetch('/api/auth/status');
+        const data = await res.json();
+        if (data.isAuthenticated) {
+          showDashboard();
+        } else {
+          showLogin();
+        }
+      } catch (err) {
+        showLogin();
+      }
+    }
+
+    function showLogin() {
+      document.getElementById('login-panel').classList.remove('hidden');
+      document.getElementById('dashboard-content').classList.add('hidden');
+      document.getElementById('logout-btn-container').classList.add('hidden');
+    }
+
+    function showDashboard() {
+      document.getElementById('login-panel').classList.add('hidden');
+      document.getElementById('dashboard-content').classList.remove('hidden');
+      document.getElementById('logout-btn-container').classList.remove('hidden');
+      loadClients();
+    }
+
+    async function login(e) {
+      e.preventDefault();
+      const password = document.getElementById('admin-password').value;
+      const errorDiv = document.getElementById('login-error');
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          errorDiv.classList.add('hidden');
+          showDashboard();
+          showToast('Successfully signed in!', 'success');
+        } else {
+          errorDiv.classList.remove('hidden');
+        }
+      } catch (err) {
+        errorDiv.classList.remove('hidden');
+      }
+    }
+
+    async function logout() {
+      try {
+        await fetch('/api/auth/logout', { method: 'POST' });
+        showLogin();
+        showToast('Successfully signed out.', 'info');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Clients CRUD
+    let clients = [];
+
+    async function loadClients() {
+      const tableBody = document.getElementById('clients-table-body');
+      try {
+        const res = await fetch('/api/clients');
+        if (!res.ok) {
+          if (res.status === 401) {
+            showLogin();
+            return;
+          }
+          throw new Error('Could not fetch clients');
+        }
+        clients = await res.json();
+        renderClients();
+        updateStats();
+      } catch (err) {
+        console.error(err);
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="6" class="py-12 text-center text-red-500 font-medium">
+              <i class="fa-solid fa-circle-exclamation text-xl mr-2"></i> Failed to load client data.
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    function renderClients() {
+      const tableBody = document.getElementById('clients-table-body');
+
+      if (clients.length === 0) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="6" class="py-12 text-center text-slate-400 font-medium">
+              <i class="fa-solid fa-users-slash text-xl mr-2"></i> No clients configured yet. Click "Add Client" above!
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tableBody.innerHTML = clients.map(client => {
+        // Status determination
+        let statusBadge = '';
+        if (client.active === 0) {
+          statusBadge = `<span class="inline-flex items-center space-x-1 bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full text-xs font-semibold"><i class="fa-solid fa-pause"></i> <span>Paused</span></span>`;
+        } else if (client.status === 'up') {
+          statusBadge = `<span class="inline-flex items-center space-x-1 bg-green-50 text-green-700 px-2.5 py-1 rounded-full text-xs font-semibold"><i class="fa-solid fa-circle-check text-[10px]"></i> <span>Online</span></span>`;
+        } else if (client.status === 'down') {
+          statusBadge = `<span class="inline-flex items-center space-x-1 bg-red-50 text-red-700 px-2.5 py-1 rounded-full text-xs font-semibold animate-bounce"><i class="fa-solid fa-triangle-exclamation text-[10px]"></i> <span>Down (${client.consecutive_failures})</span></span>`;
+        } else {
+          statusBadge = `<span class="inline-flex items-center space-x-1 bg-yellow-50 text-yellow-700 px-2.5 py-1 rounded-full text-xs font-semibold"><i class="fa-solid fa-circle-question text-[10px]"></i> <span>Pending</span></span>`;
+        }
+
+        // Reviews snippet
+        let reviewsText = '<span class="text-slate-400 italic text-xs">No Place ID</span>';
+        if (client.google_place_id) {
+          if (client.rating !== null && client.rating !== undefined) {
+            reviewsText = `
+              <div class="flex flex-col">
+                <span class="text-sm font-semibold text-slate-900">${client.rating} / 5 ⭐</span>
+                <span class="text-xs text-slate-500">${client.review_count} reviews</span>
+              </div>
+            `;
+          } else {
+            reviewsText = `<span class="text-slate-500 text-xs">Awaiting snapshot</span>`;
+          }
+        }
+
+        // Last ping status
+        let lastPingStr = 'Never';
+        if (client.last_ping_time) {
+          try {
+            lastPingStr = new Date(client.last_ping_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            if (client.last_ping_success === 0) {
+              lastPingStr += ` <span class="text-red-500 font-semibold">(Err)</span>`;
+            } else if (client.last_ping_status_code) {
+              lastPingStr += ` <span class="text-slate-400">(${client.last_ping_status_code})</span>`;
+            }
+          } catch (_) {}
+        }
+
+        return `
+          <tr class="hover:bg-slate-50/50 transition">
+            <td class="py-4 px-6">
+              <div class="flex flex-col">
+                <span class="font-bold text-slate-900 text-base">${escapeHTML(client.name)}</span>
+                <a href="${client.url}" target="_blank" class="text-xs text-blue-500 hover:underline mt-0.5 inline-flex items-center space-x-0.5">
+                  <span>${escapeHTML(client.url)}</span>
+                  <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                </a>
+              </div>
+            </td>
+            <td class="py-4 px-6 text-center">${statusBadge}</td>
+            <td class="py-4 px-6">
+              <div class="flex flex-col">
+                <span class="text-sm text-slate-700 font-medium">${escapeHTML(client.owner_email)}</span>
+                <span class="text-[10px] uppercase font-bold text-slate-400 mt-0.5 tracking-wider">Business Owner</span>
+              </div>
+            </td>
+            <td class="py-4 px-6">${reviewsText}</td>
+            <td class="py-4 px-6 text-sm font-medium text-slate-600">${lastPingStr}</td>
+            <td class="py-4 px-6 text-right space-x-1.5 whitespace-nowrap">
+              <button onclick="triggerPing(${client.id})" title="Ping Site Now" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition border border-blue-100">
+                <i class="fa-solid fa-rotate"></i>
+              </button>
+              <button onclick="triggerDigest(${client.id})" title="Send Weekly Digest Email" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-purple-50 text-purple-600 hover:bg-purple-100 transition border border-purple-100">
+                <i class="fa-solid fa-paper-plane"></i>
+              </button>
+              <button onclick="openClientModal(${client.id})" title="Edit Settings" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-50 text-slate-600 hover:bg-slate-150 transition border border-slate-200">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </button>
+              <button onclick="deleteClient(${client.id})" title="Delete Client" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition border border-red-100">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function updateStats() {
+      const total = clients.length;
+      const active = clients.filter(c => c.active === 1).length;
+      const down = clients.filter(c => c.active === 1 && c.status === 'down').length;
+
+      document.getElementById('stat-total-clients').textContent = total;
+      document.getElementById('stat-active-clients').textContent = active;
+      document.getElementById('stat-down-clients').textContent = down;
+
+      // South Africa price benchmark R150-300. Assume avg R250 per client.
+      const estimatedMRR = active * 250;
+      document.getElementById('stat-mrr').textContent = `R${estimatedMRR}`;
+
+      const downCard = document.getElementById('stat-down-card');
+      const downIcon = document.getElementById('stat-down-icon');
+      if (down > 0) {
+        downCard.className = "bg-red-50 p-5 rounded-2xl shadow-sm border border-red-200 flex items-center justify-between transition-colors";
+        downIcon.className = "text-red-500 bg-red-100 p-3.5 rounded-xl animate-bounce";
+      } else {
+        downCard.className = "bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between transition-colors";
+        downIcon.className = "text-slate-500 bg-slate-50 p-3.5 rounded-xl";
+      }
+    }
+
+    // Modal forms controls
+    function openClientModal(id = null) {
+      const modal = document.getElementById('client-modal');
+      const modalTitle = document.getElementById('modal-title');
+
+      // Clear values
+      document.getElementById('modal-client-id').value = '';
+      document.getElementById('client-name').value = '';
+      document.getElementById('client-url').value = '';
+      document.getElementById('client-owner-email').value = '';
+      document.getElementById('client-place-id').value = '';
+      document.getElementById('client-active').checked = true;
+
+      if (id) {
+        modalTitle.textContent = "Edit Monitored Client";
+        const client = clients.find(c => c.id === id);
+        if (client) {
+          document.getElementById('modal-client-id').value = client.id;
+          document.getElementById('client-name').value = client.name;
+          document.getElementById('client-url').value = client.url;
+          document.getElementById('client-owner-email').value = client.owner_email;
+          document.getElementById('client-place-id').value = client.google_place_id || '';
+          document.getElementById('client-active').checked = client.active === 1;
+        }
+      } else {
+        modalTitle.textContent = "Add Monitored Client";
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeClientModal() {
+      document.getElementById('client-modal').classList.add('hidden');
+    }
+
+    async function saveClient(e) {
+      e.preventDefault();
+      const id = document.getElementById('modal-client-id').value;
+      const payload = {
+        name: document.getElementById('client-name').value,
+        url: document.getElementById('client-url').value,
+        owner_email: document.getElementById('client-owner-email').value,
+        google_place_id: document.getElementById('client-place-id').value,
+        active: document.getElementById('client-active').checked
+      };
+
+      const url = id ? `/api/clients/${id}` : '/api/clients';
+      const method = id ? 'PUT' : 'POST';
+
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          closeClientModal();
+          loadClients();
+          showToast(id ? 'Client updated!' : 'Client successfully added!', 'success');
+        } else {
+          const errData = await res.json();
+          showToast(errData.error || 'Failed to save client.', 'error');
+        }
+      } catch (err) {
+        showToast('Error sending client request.', 'error');
+      }
+    }
+
+    async function deleteClient(id) {
+      if (!confirm('Are you absolutely sure you want to delete this monitored client? All related uptime metrics history will be permanently wiped.')) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/clients/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          loadClients();
+          showToast('Client deleted successfully.', 'success');
+        } else {
+          showToast('Failed to delete client.', 'error');
+        }
+      } catch (err) {
+        showToast('Error deleting client.', 'error');
+      }
+    }
+
+    async function triggerPing(id) {
+      showToast('Running on-demand ping check...', 'info');
+      try {
+        const res = await fetch(`/api/clients/${id}/ping`, { method: 'POST' });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          loadClients();
+          const result = data.pingResult;
+          if (result.success) {
+            showToast(`Success! Site resolved in ${result.responseTime}ms with HTTP ${result.statusCode}`, 'success');
+          } else {
+            showToast(`Fail! Site offline: ${result.errorMessage}`, 'error');
+          }
+        } else {
+          showToast('Failed to run on-demand ping.', 'error');
+        }
+      } catch (err) {
+        showToast('Network error during on-demand check.', 'error');
+      }
+    }
+
+    async function triggerDigest(id) {
+      showToast('Preparing weekly health stats & mailing email digest...', 'info');
+      try {
+        const res = await fetch(`/api/clients/${id}/digest`, { method: 'POST' });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          showToast(data.message || 'Digest email sent successfully!', 'success');
+        } else {
+          showToast(data.error || 'Failed to dispatch email digest.', 'error');
+        }
+      } catch (err) {
+        showToast('Failed to dispatch digest.', 'error');
+      }
+    }
+
+    // Helper utilities
+    function escapeHTML(str) {
+      if (!str) return '';
+      return str.replace(/[&<>'"]/g,
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+      );
+    }
+
+    let toastTimeout;
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-message');
+      const toastIcon = document.getElementById('toast-icon');
+
+      toastMsg.textContent = message;
+
+      let iconHtml = '';
+      if (type === 'success') {
+        toast.className = 'fixed bottom-5 right-5 z-50 bg-green-600 text-white px-5 py-3 rounded-xl shadow-lg flex items-center space-x-2 transition-transform duration-300';
+        iconHtml = '<i class="fa-solid fa-circle-check"></i>';
+      } else if (type === 'error') {
+        toast.className = 'fixed bottom-5 right-5 z-50 bg-red-600 text-white px-5 py-3 rounded-xl shadow-lg flex items-center space-x-2 transition-transform duration-300';
+        iconHtml = '<i class="fa-solid fa-circle-exclamation"></i>';
+      } else {
+        toast.className = 'fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-lg flex items-center space-x-2 transition-transform duration-300';
+        iconHtml = '<i class="fa-solid fa-circle-info"></i>';
+      }
+
+      toastIcon.innerHTML = iconHtml;
+
+      // Bring toast in
+      toast.classList.remove('hidden');
+      toast.style.transform = 'translateY(0)';
+
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.style.transform = 'translateY(80px)';
+        setTimeout(() => toast.classList.add('hidden'), 300);
+      }, 4000);
+    }
+
+    // Run auth check on page load
+    checkAuth();
+  </script>
+</body>
+</html>

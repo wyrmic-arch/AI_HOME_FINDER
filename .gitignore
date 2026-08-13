@@ -11,8 +11,14 @@ build/
 *.tsbuildinfo
 
 # Environment variables (never commit)
+.env
 .env.local
 .env.*.local
+
+# Databases and runtime data
+data/
+*.db
+*.db-journal
 
 # IDE
 .idea/
